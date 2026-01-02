@@ -1,0 +1,19 @@
+[workspace]
+members = [
+    "programs/*"
+]
+resolver = "2"
+
+[workspace.lints.rust]
+deprecated = "allow" #有些老版本sdk还是有这个标记，设置允许，下面两个就警告
+unused = "warn"
+dead_code = "warn"
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1
