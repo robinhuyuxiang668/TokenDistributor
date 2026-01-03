@@ -14,7 +14,7 @@ import {
 } from "@solana/spl-token";
 import { PublicKey, Keypair, SystemProgram, Transaction, LAMPORTS_PER_SOL, Connection } from "@solana/web3.js";
 import { expect } from "chai";
-import { SimpleMerkleTree } from "./utils/merkle_tree";
+import { SimpleMerkleTree, TreeNode } from "./utils/merkle_tree";
 import { LiteSVM } from "litesvm";
 import * as fs from "fs";
 import * as crypto from "crypto";
@@ -50,7 +50,7 @@ function liteSvmCreateMint(svm: LiteSVM, mintAuthority: Keypair, decimals = 9, p
 
   const tx = new Transaction();
 
-  // 创建铸造账户（系统程序）
+  // 创建Mint代币
   tx.add(
     SystemProgram.createAccount({
       fromPubkey: mintAuthority.publicKey,
@@ -178,19 +178,10 @@ describe("token_distributor_litesvm", () => {
   let tokenVaultPda: PublicKey;
   let tokenVaultPda2022: PublicKey;
 
-  // 用于提取测试的额外变量
-  let withdrawTestDistributorPda: PublicKey;
-  let withdrawTestDistributorPda2022: PublicKey;
-  let withdrawTestTokenVaultPda: PublicKey;
-  let withdrawTestTokenVaultPda2022: PublicKey;
-
   // 测试申领者和默克尔树数据
   let claimant1: Keypair;
   let claimant2: Keypair;
-  let testTreeNodes: Array<{
-    claimant: PublicKey;
-    amount: anchor.BN;
-  }>;
+  let testTreeNodes: Array<TreeNode>;
   let testMerkleTree: SimpleMerkleTree;
   let testMerkleRoot: number[];
 
@@ -208,10 +199,7 @@ describe("token_distributor_litesvm", () => {
   // 计算特定 nonce 的分发器 PDA 的辅助函数
   function calculateDistributorPda(tokenMint: PublicKey, owner: PublicKey, nonce: number): PublicKey {
     const DISTRIBUTOR_SEED = "distributor";
-    const [pda] = PublicKey.findProgramAddressSync(
-      [Buffer.from(DISTRIBUTOR_SEED), tokenMint.toBuffer(), owner.toBuffer(), new anchor.BN(nonce).toArrayLike(Buffer, "le", 4)],
-      programId,
-    );
+    const [pda] = PublicKey.findProgramAddressSync([Buffer.from(DISTRIBUTOR_SEED), tokenMint.toBuffer(), owner.toBuffer(), new anchor.BN(nonce).toArrayLike(Buffer, "le", 4)], programId);
     return pda;
   }
 
@@ -304,12 +292,10 @@ describe("token_distributor_litesvm", () => {
     // LiteSVM 应该内置这些程序，但让我们确保它们可用
     console.log("✅ 系统程序应该在 LiteSVM 中默认可用");
 
-    // 创建密钥对 - 使用拥有者作为主支付者（类似于 bankrun context.payer）
     owner = Keypair.generate();
     operator = Keypair.generate();
-
-    console.log("✅ 使用生成的拥有者作为支付者:", owner.publicKey.toString());
-    console.log("✅ 生成的操作员:", operator.publicKey.toString());
+    console.log("owner:", owner.publicKey.toString());
+    console.log("operator:", operator.publicKey.toString());
 
     // 计算 nonce 状态 PDA
     const OWNER_NONCE_SEED = "owner_nonce";
@@ -317,7 +303,7 @@ describe("token_distributor_litesvm", () => {
     console.log("✅ Nonce 状态 PDA:", ownerNoncePda.toString());
 
     // 向拥有者空投 SOL（主支付者）
-    svm.airdrop(owner.publicKey, BigInt(100 * LAMPORTS_PER_SOL)); // 给拥有者足够的 SOL
+    svm.airdrop(owner.publicKey, BigInt(100 * LAMPORTS_PER_SOL));
     console.log("✅ 已向拥有者空投 100 SOL");
 
     // 检查余额
@@ -497,7 +483,7 @@ describe("token_distributor_litesvm", () => {
 
     const liteSvmConnection = new LiteSVMConnection(svm) as any;
     const wallet = new anchor.Wallet(owner);
-    provider = new anchor.AnchorProvider(liteSvmConnection, wallet, { commitment: "processed" });
+    provider = new anchor.AnchorProvider(liteSvmConnection, wallet, { commitment: "confirmed" });
 
     // 加载 IDL 并使用修正的程序 ID 创建程序实例
     const programIdl = JSON.parse(fs.readFileSync("./target/idl/token_distributor.json", "utf8"));
@@ -1344,10 +1330,7 @@ describe("token_distributor_litesvm", () => {
       console.log("已创建申领者2代币账户:", claimant2TokenAccount.toString());
 
       // 查找申领者2的申领状态 PDA
-      const [claimStatusPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("claim"), distributorPda2022.toBuffer(), claimant2.publicKey.toBuffer()],
-        programId,
-      );
+      const [claimStatusPda] = PublicKey.findProgramAddressSync([Buffer.from("claim"), distributorPda2022.toBuffer(), claimant2.publicKey.toBuffer()], programId);
 
       // 使用 LiteSVM 连接获取初始代币余额
       const initialVaultBalance = await getAccount(provider.connection, tokenVaultPda2022, undefined, TOKEN_2022_PROGRAM_ID);
@@ -1814,10 +1797,7 @@ describe("token_distributor_litesvm", () => {
         delayedClaimant1TokenAccount = claimant1TokenAccountKeypair.publicKey;
 
         // 查找申领状态 PDA
-        [delayedClaimStatusPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("claim"), delayedDistributorPda.toBuffer(), claimant1.publicKey.toBuffer()],
-          programId,
-        );
+        [delayedClaimStatusPda] = PublicKey.findProgramAddressSync([Buffer.from("claim"), delayedDistributorPda.toBuffer(), claimant1.publicKey.toBuffer()], programId);
 
         const claimIndex = 0;
         const claimAmount = testTreeNodes[claimIndex].amount;
@@ -2279,10 +2259,7 @@ describe("token_distributor_litesvm", () => {
         delayedClaimant2TokenAccount2022 = claimant2TokenAccountKeypair.publicKey;
 
         // 查找申领状态 PDA
-        [delayedClaimStatusPda2022] = PublicKey.findProgramAddressSync(
-          [Buffer.from("claim"), delayedDistributorPda2022.toBuffer(), claimant2.publicKey.toBuffer()],
-          programId,
-        );
+        [delayedClaimStatusPda2022] = PublicKey.findProgramAddressSync([Buffer.from("claim"), delayedDistributorPda2022.toBuffer(), claimant2.publicKey.toBuffer()], programId);
 
         const claimIndex = 1;
         const claimAmount = testTreeNodes[claimIndex].amount;
