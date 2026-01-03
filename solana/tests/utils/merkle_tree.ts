@@ -59,10 +59,7 @@ export class SimpleMerkleTree {
       for (let i = 0; i < levelLen; i++) {
         const prevLevelIdx = 2 * i;
         const leftSibling = this.nodes[prevLevelStart + prevLevelIdx];
-        const rightSibling =
-          prevLevelIdx + 1 < prevLevelLen
-            ? this.nodes[prevLevelStart + prevLevelIdx + 1]
-            : this.nodes[prevLevelStart + prevLevelIdx]; // 如果为奇数则复制最后一个条目
+        const rightSibling = prevLevelIdx + 1 < prevLevelLen ? this.nodes[prevLevelStart + prevLevelIdx + 1] : this.nodes[prevLevelStart + prevLevelIdx]; // 如果为奇数则复制最后一个条目
 
         const hash = this.hashIntermediate(leftSibling, rightSibling);
         this.nodes.push(hash);

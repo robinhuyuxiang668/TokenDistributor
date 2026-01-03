@@ -25,5 +25,6 @@ custom-panic = []
 workspace = true  
 
 [dependencies]
-anchor-lang = { version = "0.31.1", features = ["init-if-needed", "event-cpi"]}
-anchor-spl = "0.31.1"
+anchor-lang = { version = "0.32.1", features = ["init-if-needed", "event-cpi"]}
+anchor-spl = "0.32.1"
+solana-program = "^2.2.1"

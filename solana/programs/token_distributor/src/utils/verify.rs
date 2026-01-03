@@ -1,4 +1,4 @@
-use anchor_lang::solana_program::hash::hashv;
+use solana_program::hash::hashv;
 
 /// 默克尔证明验证
 /// 修改自 https://github.com/saber-hq/merkle-distributor/blob/ac937d1901033ecb7fa3b0db22f7b39569c8e052/programs/merkle-distributor/src/merkle_proof.rs#L8

@@ -1,5 +1,5 @@
-use anchor_lang::solana_program::hash::hashv;
-use anchor_lang::solana_program::pubkey::Pubkey;
+use solana_program::hash::hashv;
+use solana_program::pubkey::Pubkey;
 use std::str::FromStr;
 
 #[derive(Debug, Clone)]
@@ -31,15 +31,12 @@ impl SimpleMerkleTree {
         tree
     }
 
-    fn hash_leaf(claimant: &Pubkey, amount: u64) -> anchor_lang::solana_program::hash::Hash {
+    fn hash_leaf(claimant: &Pubkey, amount: u64) -> solana_program::hash::Hash {
         // Hash leaf without prefix
         hashv(&[&claimant.to_bytes(), &amount.to_le_bytes()])
     }
 
-    fn hash_intermediate(
-        left: &[u8; 32],
-        right: &[u8; 32],
-    ) -> anchor_lang::solana_program::hash::Hash {
+    fn hash_intermediate(left: &[u8; 32], right: &[u8; 32]) -> solana_program::hash::Hash {
         // Hash intermediate nodes without prefix, using the same ordering as verify function
         if left <= right {
             hashv(&[left, right])
@@ -147,22 +144,10 @@ mod tests {
     fn get_test_data() -> Vec<TreeNode> {
         // Data from test_fixtures.csv
         vec![
-            TreeNode {
-                claimant: Pubkey::from_str("3gmBN8LBomg3sZEjTgp2YsECMYgJpjcT7xUfpnDB4gSs").unwrap(),
-                amount: 1000,
-            },
-            TreeNode {
-                claimant: Pubkey::from_str("8G9xE8awr9vA2PZWFTJSHNhS16KLnXYdV6XEaJP1a2Yx").unwrap(),
-                amount: 2000,
-            },
-            TreeNode {
-                claimant: Pubkey::from_str("A4mDtfFCkdt9CqGzEkfiSHhJD8d3bUMasVzwajudGtb2").unwrap(),
-                amount: 3000,
-            },
-            TreeNode {
-                claimant: Pubkey::from_str("4SX6nqv5VRLMoNfYM5phvHgcBNcBEwUEES4qPPjf1EqS").unwrap(),
-                amount: 4000,
-            },
+            TreeNode { claimant: Pubkey::from_str("3gmBN8LBomg3sZEjTgp2YsECMYgJpjcT7xUfpnDB4gSs").unwrap(), amount: 1000 },
+            TreeNode { claimant: Pubkey::from_str("8G9xE8awr9vA2PZWFTJSHNhS16KLnXYdV6XEaJP1a2Yx").unwrap(), amount: 2000 },
+            TreeNode { claimant: Pubkey::from_str("A4mDtfFCkdt9CqGzEkfiSHhJD8d3bUMasVzwajudGtb2").unwrap(), amount: 3000 },
+            TreeNode { claimant: Pubkey::from_str("4SX6nqv5VRLMoNfYM5phvHgcBNcBEwUEES4qPPjf1EqS").unwrap(), amount: 4000 },
         ]
     }
 
@@ -177,13 +162,7 @@ mod tests {
         // Print individual leaf hashes for debugging
         for (i, node) in tree_nodes.iter().enumerate() {
             let leaf_hash = SimpleMerkleTree::hash_leaf(&node.claimant, node.amount);
-            println!(
-                "Leaf {}: claimant={}, amount={}, hash={:?}",
-                i,
-                node.claimant,
-                node.amount,
-                leaf_hash.to_bytes()
-            );
+            println!("Leaf {}: claimant={}, amount={}, hash={:?}", i, node.claimant, node.amount, leaf_hash.to_bytes());
         }
 
         let merkle_tree = SimpleMerkleTree::new(tree_nodes);
@@ -198,8 +177,8 @@ mod tests {
 
         // Expected TypeScript result (after removing prefixes and using lexicographic ordering)
         let expected_ts_root = vec![
-            51, 122, 158, 29, 92, 151, 242, 153, 236, 252, 41, 211, 22, 50, 250, 139, 218, 189, 37,
-            163, 61, 102, 114, 92, 184, 219, 198, 184, 3, 245, 63, 91,
+            51, 122, 158, 29, 92, 151, 242, 153, 236, 252, 41, 211, 22, 50, 250, 139, 218, 189, 37, 163, 61, 102, 114, 92, 184, 219, 198,
+            184, 3, 245, 63, 91,
         ];
 
         println!("Expected TypeScript root: {:?}", expected_ts_root);
@@ -210,14 +189,9 @@ mod tests {
         } else {
             println!("❌ MISMATCH: Rust and TypeScript Merkle roots differ!");
             println!("Difference found at positions:");
-            for (i, (rust_byte, ts_byte)) in
-                root_array.iter().zip(expected_ts_root.iter()).enumerate()
-            {
+            for (i, (rust_byte, ts_byte)) in root_array.iter().zip(expected_ts_root.iter()).enumerate() {
                 if rust_byte != ts_byte {
-                    println!(
-                        "  Position {}: Rust={}, TypeScript={}",
-                        i, rust_byte, ts_byte
-                    );
+                    println!("  Position {}: Rust={}, TypeScript={}", i, rust_byte, ts_byte);
                 }
             }
         }
@@ -250,10 +224,7 @@ mod tests {
 
             // Verify proof
             let is_valid = verify(proof.clone(), *root, leaf_hash.to_bytes());
-            println!(
-                "Proof verification: {}",
-                if is_valid { "✅ VALID" } else { "❌ INVALID" }
-            );
+            println!("Proof verification: {}", if is_valid { "✅ VALID" } else { "❌ INVALID" });
 
             assert!(is_valid, "Proof verification failed for index {}", index);
         }
@@ -270,41 +241,23 @@ mod tests {
         let root = merkle_tree.get_root().unwrap();
 
         // Test with wrong leaf
-        let wrong_leaf = SimpleMerkleTree::hash_leaf(
-            &Pubkey::from_str("11111111111111111111111111111112").unwrap(),
-            9999,
-        );
+        let wrong_leaf = SimpleMerkleTree::hash_leaf(&Pubkey::from_str("11111111111111111111111111111112").unwrap(), 9999);
         let proof = merkle_tree.get_proof(0).expect("Failed to get proof");
 
         let is_valid = verify(proof, *root, wrong_leaf.to_bytes());
-        println!(
-            "Invalid proof verification: {}",
-            if is_valid {
-                "❌ UNEXPECTEDLY VALID"
-            } else {
-                "✅ CORRECTLY INVALID"
-            }
-        );
+        println!("Invalid proof verification: {}", if is_valid { "❌ UNEXPECTEDLY VALID" } else { "✅ CORRECTLY INVALID" });
 
         assert!(!is_valid, "Invalid proof should not verify");
 
         // Test with tampered proof
-        let correct_leaf =
-            SimpleMerkleTree::hash_leaf(&tree_nodes[0].claimant, tree_nodes[0].amount);
+        let correct_leaf = SimpleMerkleTree::hash_leaf(&tree_nodes[0].claimant, tree_nodes[0].amount);
         let mut tampered_proof = merkle_tree.get_proof(0).expect("Failed to get proof");
         if !tampered_proof.is_empty() {
             tampered_proof[0][0] = tampered_proof[0][0].wrapping_add(1); // Tamper with first byte
         }
 
         let is_valid_tampered = verify(tampered_proof, *root, correct_leaf.to_bytes());
-        println!(
-            "Tampered proof verification: {}",
-            if is_valid_tampered {
-                "❌ UNEXPECTEDLY VALID"
-            } else {
-                "✅ CORRECTLY INVALID"
-            }
-        );
+        println!("Tampered proof verification: {}", if is_valid_tampered { "❌ UNEXPECTEDLY VALID" } else { "✅ CORRECTLY INVALID" });
 
         assert!(!is_valid_tampered, "Tampered proof should not verify");
 
@@ -316,41 +269,26 @@ mod tests {
         println!("=== Testing proof edge cases ===");
 
         // Test with single node
-        let single_node = vec![TreeNode {
-            claimant: Pubkey::from_str("3gmBN8LBomg3sZEjTgp2YsECMYgJpjcT7xUfpnDB4gSs").unwrap(),
-            amount: 1000,
-        }];
+        let single_node =
+            vec![TreeNode { claimant: Pubkey::from_str("3gmBN8LBomg3sZEjTgp2YsECMYgJpjcT7xUfpnDB4gSs").unwrap(), amount: 1000 }];
 
         let single_tree = SimpleMerkleTree::new(single_node.clone());
         let single_root = single_tree.get_root().unwrap();
-        let single_proof = single_tree
-            .get_proof(0)
-            .expect("Failed to get proof for single node");
+        let single_proof = single_tree.get_proof(0).expect("Failed to get proof for single node");
 
         println!("Single node proof length: {}", single_proof.len());
         assert_eq!(single_proof.len(), 0, "Single node should have empty proof");
 
-        let single_leaf =
-            SimpleMerkleTree::hash_leaf(&single_node[0].claimant, single_node[0].amount);
+        let single_leaf = SimpleMerkleTree::hash_leaf(&single_node[0].claimant, single_node[0].amount);
         let single_valid = verify(single_proof, *single_root, single_leaf.to_bytes());
-        println!(
-            "Single node verification: {}",
-            if single_valid {
-                "✅ VALID"
-            } else {
-                "❌ INVALID"
-            }
-        );
+        println!("Single node verification: {}", if single_valid { "✅ VALID" } else { "❌ INVALID" });
         assert!(single_valid, "Single node proof should be valid");
 
         // Test out of bounds
         let tree_nodes = get_test_data();
         let merkle_tree = SimpleMerkleTree::new(tree_nodes);
         let out_of_bounds_result = merkle_tree.get_proof(10);
-        assert!(
-            out_of_bounds_result.is_err(),
-            "Out of bounds should return error"
-        );
+        assert!(out_of_bounds_result.is_err(), "Out of bounds should return error");
 
         println!("✅ Edge case tests passed!");
     }

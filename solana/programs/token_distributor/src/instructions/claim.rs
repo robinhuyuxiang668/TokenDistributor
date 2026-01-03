@@ -6,6 +6,7 @@ use crate::utils::transfer_token;
 use crate::utils::verify;
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
+use solana_program::hash::{hashv, Hash};
 
 /**
  * 申领代币的账户上下文
@@ -112,8 +113,8 @@ pub fn handle_claim(ctx: Context<Claim>, max_amount: u64, proof: Vec<[u8; 32]>) 
     let claimant_account = &ctx.accounts.claimant;
 
     // 创建叶子节点哈希（claimant_pubkey + max_amount）
-    let leaf: anchor_lang::solana_program::hash::Hash =
-        anchor_lang::solana_program::hash::hashv(&[&claimant_account.key().to_bytes(), &max_amount.to_le_bytes()]);
+    // Solana 的 hashv 实现使用 SHA-256（不是 Keccak-256！）
+    let leaf: Hash = hashv(&[&claimant_account.key().to_bytes(), &max_amount.to_le_bytes()]);
 
     // 验证默克尔证明
     // 这确保用户有资格申领该数量

@@ -617,11 +617,6 @@ describe("token_distributor", () => {
     }
   });
 
-  // AssertionError: expected 'Early claim should have failed but su…' to include 'DistributionNotStarted'
-  // at /Users/user/Documents/code_back/ok/Boost-TokenDistributor-Solana/tests/token_distributor.ts:744:34
-  // at Generator.next (<anonymous>)
-  // at fulfilled (tests/token_distributor.ts:28:58)
-  // at processTicksAndRejections (node:internal/process/task_queues:103:5)
   it("Claim tokens for nonce 1 (SPL Token)[current time]", async () => {
     try {
       console.log("=== Testing claim for nonce 1 (SPL Token) ===");
@@ -819,11 +814,6 @@ describe("token_distributor", () => {
     }
   });
 
-  // AssertionError: expected 'Early claim should have failed but su…' to include 'DistributionNotStarted'
-  //     at /Users/user/Documents/code_back/ok/Boost-TokenDistributor-Solana/tests/token_distributor.ts:952:34
-  //     at Generator.next (<anonymous>)
-  //     at fulfilled (tests/token_distributor.ts:28:58)
-  //     at processTicksAndRejections (node:internal/process/task_queues:103:5)
   it("Claim tokens for nonce 2 (Token 2022)[current time]", async () => {
     try {
       console.log("=== Testing claim for nonce 2 (Token 2022) ===");

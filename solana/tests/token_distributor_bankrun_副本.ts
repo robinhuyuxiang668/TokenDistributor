@@ -50,8 +50,10 @@ async function manualCreateMint(provider: any, mintAuthority: PublicKey, decimal
 
   // 租金计算（Token 2022 使用相同的 MINT_SIZE）
   const lamports = await provider.connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+
   const tx = new Transaction();
-  // 创建Mint代币
+
+  // 创建铸造账户（系统程序）
   tx.add(
     SystemProgram.createAccount({
       fromPubkey: provider.wallet.publicKey,
@@ -102,7 +104,7 @@ async function manualCreateAccount(provider: any, mint: PublicKey, owner: Public
 
   const tx = new Transaction();
 
-  // 创建tokeAccount
+  // 创建代币账户（系统程序）
   tx.add(
     SystemProgram.createAccount({
       fromPubkey: provider.wallet.publicKey,
@@ -222,11 +224,11 @@ describe("token_distributor_bankrun", () => {
     // 计算 nonce 状态 PDA
     const OWNER_NONCE_SEED = "owner_nonce";
     [ownerNoncePda] = PublicKey.findProgramAddressSync([Buffer.from(OWNER_NONCE_SEED), owner.publicKey.toBuffer()], program.programId);
-    console.log("Nonce 状态 PDA:", ownerNoncePda.toString());
+    console.log("ownerNoncePda:", ownerNoncePda.toString());
 
     // 检查余额
     const balance = await context.banksClient.getBalance(owner.publicKey);
-    console.log("拥有者余额:", Number(balance) / LAMPORTS_PER_SOL, "SOL");
+    console.log(`owner balance: ${balance / LAMPORTS_PER_SOL} SOL`);
 
     // 从拥有者给操作员一些 SOL
     const transferTx = new Transaction().add(
@@ -239,6 +241,7 @@ describe("token_distributor_bankrun", () => {
     transferTx.recentBlockhash = context.lastBlockhash;
     transferTx.sign(owner);
     await context.banksClient.processTransaction(transferTx);
+
     console.log("已向操作员转移 1 SOL");
 
     // 创建我们控制的测试申领者密钥对
@@ -260,12 +263,12 @@ describe("token_distributor_bankrun", () => {
     }
     console.log("已创建测试申领者并转移 SOL 用于交易费用");
 
-    // 创建默克尔树节点
+    // 使用我们控制的密钥对创建测试树节点
     testTreeNodes = [
       { claimant: claimant1.publicKey, amount: new anchor.BN(1000) },
       { claimant: claimant2.publicKey, amount: new anchor.BN(2000) },
-      { claimant: owner.publicKey, amount: new anchor.BN(3000) }, // 使用owner作为第三个申领者
-      { claimant: operator.publicKey, amount: new anchor.BN(4000) }, // 使用operator作为第四个申领者
+      { claimant: owner.publicKey, amount: new anchor.BN(3000) }, // 使用拥有者作为第三个申领者
+      { claimant: operator.publicKey, amount: new anchor.BN(4000) }, // 使用操作员作为第四个申领者
     ];
 
     // 使用测试数据创建默克尔树
@@ -523,6 +526,7 @@ describe("token_distributor_bankrun", () => {
     // 使用 context.banksClient 获取当前 Solana 区块链时间
     const clock = await context.banksClient.getClock();
     const blockTime = Number(clock.unixTimestamp);
+
     console.log("当前 Solana 区块时间:", blockTime);
 
     // 将 nonce 1（SPL Token）的时间设置为当前时间 + 4 秒
@@ -538,7 +542,7 @@ describe("token_distributor_bankrun", () => {
       .signers([operator])
       .rpc();
 
-    console.log("Set time transaction signature for nonce 1:", tx1);
+    console.log("nonce 1 设置时间交易签名:", tx1);
 
     // 将 nonce 2（Token 2022）的时间设置为 nonce 1 结束后
     // nonce 1 持续时间为 14 天（1,209,600 秒），所以 nonce 2 在该时间之后 + 10 秒缓冲开始

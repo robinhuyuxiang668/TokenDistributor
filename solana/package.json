@@ -5,9 +5,9 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.31.1",
+    "@coral-xyz/anchor": "^0.32.1",
     "@noble/hashes": "^1.8.0",
-    "@solana/spl-token": "^0.4.13",
+    "@solana/spl-token": "^0.4.14",
     "anchor-bankrun": "^0.5.0",
     "csv-parser": "^3.2.0",
     "litesvm": "^0.2.0"
